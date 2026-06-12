@@ -86,17 +86,25 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
+            'username' => (function () {
+                $user = env('DB_USERNAME', 'root');
+                $host = env('DB_HOST', '');
+                // Neon.tech SNI workaround: append endpoint ID to username
+                if (str_contains($host, '.neon.tech') && !str_contains($user, '$')) {
+                    $endpointId = explode('.', $host)[0];
+                    return $user . '$' . $endpointId;
+                }
+                return $user;
+            })(),
             'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'require',
+            'sslmode' => env('DB_SSLMODE', 'require'),
         ],
 
         'sqlsrv' => [
