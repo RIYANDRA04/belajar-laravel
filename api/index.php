@@ -4,11 +4,11 @@
 if (isset($_GET['test_db'])) {
     header("Content-Type: text/plain");
     
-    $host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? '');
-    $port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '5432');
-    $db   = getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? '');
-    $user = getenv('DB_USERNAME') ?: ($_ENV['DB_USERNAME'] ?? '');
-    $pass = getenv('DB_PASSWORD') ?: ($_ENV['DB_PASSWORD'] ?? '');
+    $host = trim(getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ''));
+    $port = trim(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '5432'));
+    $db   = trim(getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? ''));
+    $user = trim(getenv('DB_USERNAME') ?: ($_ENV['DB_USERNAME'] ?? ''));
+    $pass = trim(getenv('DB_PASSWORD') ?: ($_ENV['DB_PASSWORD'] ?? ''));
     
     $endpoint = explode('.', $host)[0];
     
