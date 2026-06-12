@@ -80,29 +80,5 @@ Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\IsAdmin::class]
     Route::patch('orders/{order}', [AdminOrderController::class, 'update'])->name('admin.orders.update');
 });
 
-// Helper Route to Run Migration & Seeding on Serverless (Vercel)
-Route::get('/run-migration', function () {
-    if (request()->has('debug_env')) {
-        return [
-            'DB_CONNECTION' => env('DB_CONNECTION'),
-            'DB_HOST' => env('DB_HOST'),
-            'DB_PORT' => env('DB_PORT'),
-            'DB_DATABASE' => env('DB_DATABASE'),
-            'DB_USERNAME' => env('DB_USERNAME'),
-            'DB_SSLMODE' => env('DB_SSLMODE'),
-        ];
-    }
-    try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        $migrationOutput = \Illuminate\Support\Facades\Artisan::output();
-        
-        // Optional: Run seeding if needed (e.g. php artisan db:seed)
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-        $seedingOutput = \Illuminate\Support\Facades\Artisan::output();
-        
-        return "<h3>Migration and Seeding completed successfully!</h3><pre>Migration:\n" . $migrationOutput . "\n\nSeeding:\n" . $seedingOutput . "</pre>";
-    } catch (\Exception $e) {
-        return "<h3>Error running migration:</h3><pre>" . $e->getMessage() . "</pre>";
-    }
-});
+// helper route /run-migration removed for production security
 
