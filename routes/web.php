@@ -97,10 +97,10 @@ Route::get('/run-migration', function () {
         $migrationOutput = \Illuminate\Support\Facades\Artisan::output();
         
         // Optional: Run seeding if needed (e.g. php artisan db:seed)
-        // \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-        // $seedingOutput = \Illuminate\Support\Facades\Artisan::output();
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        $seedingOutput = \Illuminate\Support\Facades\Artisan::output();
         
-        return "<h3>Migration completed successfully!</h3><pre>" . $migrationOutput . "</pre>";
+        return "<h3>Migration and Seeding completed successfully!</h3><pre>Migration:\n" . $migrationOutput . "\n\nSeeding:\n" . $seedingOutput . "</pre>";
     } catch (\Exception $e) {
         return "<h3>Error running migration:</h3><pre>" . $e->getMessage() . "</pre>";
     }
