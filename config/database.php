@@ -96,7 +96,13 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => env('DB_SSLMODE', 'require'),
+            'options' => (function () {
+                $host = env('DB_HOST', '');
+                // Extract the endpoint ID (first part of Neon host) for SNI workaround
+                $endpointId = explode('.', $host)[0] ?? '';
+                return $endpointId ? ['options' => 'endpoint=' . $endpointId] : [];
+            })(),
         ],
 
         'sqlsrv' => [
