@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+/* Fix browser autofill background styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #374151 !important;
+    caret-color: #374151 !important;
+    background-color: transparent !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Premium Glassmorphic Dropdowns & Selects styling globally */
+.custom-dropdown .dropdown-btn {
+    background: #ffffff !important;
+    border: 1px solid rgba(99, 102, 241, 0.15) !important;
+    color: #374151 !important;
+    border-radius: 1rem !important;
+    padding: 0.75rem 1.25rem !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.custom-dropdown .dropdown-btn:hover {
+    background: #f8fafc !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 25px rgba(99, 102, 241, 0.08) !important;
+}
+
+.custom-dropdown .dropdown-btn:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+}
+
+.custom-dropdown .dropdown-menu {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(99, 102, 241, 0.1) !important;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12) !important;
+    padding: 0.5rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.custom-dropdown .dropdown-item {
+    border-radius: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    color: #4b5563 !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.custom-dropdown .dropdown-item:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.08),
+        rgba(139, 92, 246, 0.08)
+    ) !important;
+    color: #6366f1 !important;
+    padding-left: 1.25rem !important;
+}
+
+.custom-dropdown .dropdown-item .check-icon {
+    color: #6366f1 !important;
+}
