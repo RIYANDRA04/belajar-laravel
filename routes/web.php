@@ -82,6 +82,16 @@ Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\IsAdmin::class]
 
 // Helper Route to Run Migration & Seeding on Serverless (Vercel)
 Route::get('/run-migration', function () {
+    if (request()->has('debug_env')) {
+        return [
+            'DB_CONNECTION' => env('DB_CONNECTION'),
+            'DB_HOST' => env('DB_HOST'),
+            'DB_PORT' => env('DB_PORT'),
+            'DB_DATABASE' => env('DB_DATABASE'),
+            'DB_USERNAME' => env('DB_USERNAME'),
+            'DB_SSLMODE' => env('DB_SSLMODE'),
+        ];
+    }
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $migrationOutput = \Illuminate\Support\Facades\Artisan::output();
