@@ -23,6 +23,27 @@ class ProductController extends Controller
     }
 
     /**
+     * Return a signed upload token so the browser can upload directly to Cloudinary.
+     * This avoids sending large files through Vercel serverless functions.
+     */
+    public function cloudinarySignature()
+    {
+        $timestamp = time();
+        $folder    = 'shoes';
+
+        $paramStr  = "folder={$folder}&timestamp={$timestamp}";
+        $signature = hash('sha256', $paramStr . env('CLOUDINARY_API_SECRET'));
+
+        return response()->json([
+            'signature'  => $signature,
+            'timestamp'  => $timestamp,
+            'api_key'    => env('CLOUDINARY_API_KEY'),
+            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'folder'     => $folder,
+        ]);
+    }
+
+    /**
      * Receive a single 64 KB binary chunk.
      * Each request body is tiny → no PHP-CGI buffer issues.
      * Headers: X-Upload-Id, X-Chunk-Index, X-Total-Chunks, X-File-Type

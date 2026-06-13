@@ -63,6 +63,7 @@ Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\IsAdmin::class]
     // ─── Chunked image upload — must be BEFORE resource() to avoid {product} wildcard ───
     Route::post('products/upload-chunk',    [AdminProductController::class, 'uploadChunk'])->name('admin.products.upload-chunk');
     Route::post('products/finalize-upload', [AdminProductController::class, 'finalizeUpload'])->name('admin.products.finalize-upload');
+    Route::get('products/cloudinary-signature', [AdminProductController::class, 'cloudinarySignature'])->name('admin.products.cloudinary-signature');
 
     Route::resource('products', AdminProductController::class)
         ->names([

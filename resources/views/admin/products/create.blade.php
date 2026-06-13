@@ -106,6 +106,7 @@
 @push('scripts')
 <script>
     const CSRF = "{{ csrf_token() }}";
+    const CLOUDINARY_SIG_URL = "{{ route('admin.products.cloudinary-signature') }}";
 
     // ============================
     //   DYNAMIC COLOR ROWS
@@ -150,7 +151,8 @@
                 </div>
 
                 <button type="button" onclick="triggerColorFile(${idx})"
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-600 transition-all">
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-600 transition-all"
+                        id="upload-btn-${idx}">
                     Upload
                 </button>
 
@@ -167,7 +169,7 @@
                 </button>
             </div>
 
-            <input type="file" name="color_files[${idx}]" id="color-file-${idx}" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden"
+            <input type="file" id="color-file-${idx}" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden"
                    onchange="handleColorFile(${idx}, this.files[0])">
         `;
         wrapper.appendChild(row);
@@ -181,28 +183,68 @@
         document.getElementById(`color-file-${idx}`).click();
     }
 
-    function handleColorFile(idx, file) {
+    async function handleColorFile(idx, file) {
         if (!file) return;
         if (file.size > 10 * 1024 * 1024) { alert('File terlalu besar! Maks 10MB.'); return; }
         if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) { alert('Format tidak didukung.'); return; }
 
-        const statusEl = document.getElementById(`color-status-${idx}`);
-        const thumbEl  = document.getElementById(`color-thumb-${idx}`);
+        const statusEl  = document.getElementById(`color-status-${idx}`);
+        const thumbEl   = document.getElementById(`color-thumb-${idx}`);
+        const uploadBtn = document.getElementById(`upload-btn-${idx}`);
 
+        // Show loading
+        statusEl.textContent = 'Mengupload...';
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '...';
+
+        // Show local preview immediately
         thumbEl.innerHTML = `<img src="${URL.createObjectURL(file)}" class="w-full h-full object-cover">`;
-        statusEl.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>';
-        statusEl.style.color  = '#10b981';
-        statusEl.title = 'Gambar siap di-upload saat form dikirim.';
-        lucide.createIcons();
+
+        try {
+            // Step 1: Get signed token from our backend
+            const sigRes = await fetch(CLOUDINARY_SIG_URL);
+            const { signature, timestamp, api_key, cloud_name, folder } = await sigRes.json();
+
+            // Step 2: Upload directly from browser to Cloudinary
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('signature', signature);
+            formData.append('timestamp', timestamp);
+            formData.append('api_key', api_key);
+            formData.append('folder', folder);
+
+            const uploadRes = await fetch(
+                `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+                { method: 'POST', body: formData }
+            );
+            const result = await uploadRes.json();
+
+            if (result.secure_url) {
+                // Step 3: Save the Cloudinary URL to the hidden field
+                document.getElementById(`color-img-path-${idx}`).value = result.secure_url;
+                // Update thumb with the final Cloudinary URL
+                thumbEl.innerHTML = `<img src="${result.secure_url}" class="w-full h-full object-cover">`;
+                statusEl.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>';
+                statusEl.style.color = '#10b981';
+                lucide.createIcons();
+            } else {
+                throw new Error(result.error?.message || 'Upload gagal.');
+            }
+        } catch (err) {
+            statusEl.textContent = '⚠ Gagal';
+            statusEl.style.color = '#ef4444';
+            alert('Upload foto gagal: ' + err.message);
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload';
+            // Clear file input — foto sudah di Cloudinary, tidak perlu kirim file lagi
+            document.getElementById(`color-file-${idx}`).value = '';
+        }
     }
 
     function normalizeArrayInput(value) {
-        if (Array.isArray(value)) {
-            return value;
-        }
-        if (value && typeof value === 'object') {
-            return Object.values(value);
-        }
+        if (Array.isArray(value)) return value;
+        if (value && typeof value === 'object') return Object.values(value);
         return [];
     }
 
