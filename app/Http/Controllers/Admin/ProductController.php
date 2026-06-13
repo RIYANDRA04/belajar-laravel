@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Cloudinary\Cloudinary;
+use Cloudinary\Configuration\Configuration;
 
 class ProductController extends Controller
 {
@@ -52,13 +54,13 @@ class ProductController extends Controller
     }
 
     /**
-     * Assemble all stored chunks into the final image file in public/shoes/.
+     * Assemble all stored chunks and upload to Cloudinary.
      * Body: JSON { upload_id, file_type, total_chunks }
      */
     public function finalizeUpload(Request $request)
     {
-        $uploadId   = preg_replace('/[^a-z0-9_\-]/', '', $request->input('upload_id', ''));
-        $fileType   = $request->input('file_type', 'image/jpeg');
+        $uploadId    = preg_replace('/[^a-z0-9_\-]/', '', $request->input('upload_id', ''));
+        $fileType    = $request->input('file_type', 'image/jpeg');
         $totalChunks = (int) $request->input('total_chunks', 0);
 
         if (!$uploadId || $totalChunks < 1) {
@@ -80,15 +82,9 @@ class ProductController extends Controller
         if (str_contains($fileType, 'webp')) $ext = 'webp';
         if (str_contains($fileType, 'gif'))  $ext = 'gif';
 
-        // Ensure target directory exists
-        $shoesDir = public_path('shoes');
-        if (!is_dir($shoesDir)) mkdir($shoesDir, 0755, true);
-
-        $filename = 'shoe_' . uniqid('', true) . '.' . $ext;
-        $dest     = $shoesDir . DIRECTORY_SEPARATOR . $filename;
-
-        // Assemble chunks sequentially
-        $fp = fopen($dest, 'wb');
+        // Assemble chunks into a temp file
+        $tmpFile = storage_path('app/chunks/' . $uploadId . '_assembled.' . $ext);
+        $fp = fopen($tmpFile, 'wb');
         for ($i = 0; $i < $totalChunks; $i++) {
             fwrite($fp, file_get_contents($tmpDir . '/chunk_' . $i));
         }
@@ -100,11 +96,25 @@ class ProductController extends Controller
         }
         @rmdir($tmpDir);
 
-        return response()->json([
-            'success' => true,
-            'path'    => 'shoes/' . $filename,
-            'url'     => asset('shoes/' . $filename),
-        ]);
+        // Upload assembled file to Cloudinary
+        try {
+            $cloudinary = $this->getCloudinary();
+            $result = $cloudinary->uploadApi()->upload($tmpFile, [
+                'folder' => 'shoes',
+                'resource_type' => 'image',
+            ]);
+            @unlink($tmpFile);
+
+            $url = $result['secure_url'];
+            return response()->json([
+                'success' => true,
+                'path'    => $url,
+                'url'     => $url,
+            ]);
+        } catch (\Exception $e) {
+            @unlink($tmpFile);
+            return response()->json(['success' => false, 'error' => 'Cloudinary upload failed: ' . $e->getMessage()], 500);
+        }
     }
 
     public function store(Request $request)
@@ -273,14 +283,26 @@ class ProductController extends Controller
 
     private function storeUploadedColorFile($file)
     {
-        $shoesDir = public_path('shoes');
-        if (!is_dir($shoesDir)) {
-            mkdir($shoesDir, 0755, true);
-        }
+        $cloudinary = $this->getCloudinary();
+        $result = $cloudinary->uploadApi()->upload($file->getRealPath(), [
+            'folder' => 'shoes',
+            'resource_type' => 'image',
+        ]);
+        return $result['secure_url'];
+    }
 
-        $filename = 'shoe_' . uniqid('', true) . '.' . $file->extension();
-        $file->move($shoesDir, $filename);
-
-        return 'shoes/' . $filename;
+    private function getCloudinary(): Cloudinary
+    {
+        Configuration::instance([
+            'cloud' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key'    => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET'),
+            ],
+            'url' => [
+                'secure' => true,
+            ],
+        ]);
+        return new Cloudinary();
     }
 }
